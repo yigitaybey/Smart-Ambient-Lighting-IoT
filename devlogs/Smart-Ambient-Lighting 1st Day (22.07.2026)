@@ -1,86 +1,83 @@
-bu gün projeye giriş yaptım yapıcağım ilk şey esp yazmayı öğrenmek ondan önce asıl amacım akıllı ortam ışıığı adından da anlaşılacağı gibi akıllı bir ışık sistemi kurmak sistem şu şekilde işliyor son fazı için konuşuyorum dışarıdakı ışık yoğunluğuna göre içeriyi aydınlatıcak ters orantılı olarak mesela saat öğen 12 de günün en aydıklık zamanında ışıklar kapalıyken gece 12 de ışıklar tam olarak 100% aydınlık olucak tabiiki bu proglamlanabilir olucak bir mavi ışık filtresi belki konulabilir ya da monütöre bağlı olarak ışık değiştirebillir ona bakıcaz ve tüm buınlar Web sitesi üzerinden kontorl edfilebilecek ardından uygulama yazılabilir bunun için
+Today I started the project. The first thing I will do is learn how to program the ESP. But before that, my main goal is to build a smart ambient lighting system, as the name suggests. The system works like this (talking about the final phase): it will light up the inside inversely proportional to the light intensity outside. For example, at 12:00 PM (noon), when it's the brightest time of the day, the lights will be off, whereas at 12:00 AM (midnight), the lights will be at 100% brightness. Of course, this will be programmable. A blue light filter might be added, or the lights could change depending on the monitor—we'll look into that. All of this will be controllable via a website, and later an app can be written for it.
 
-şimdi yapmam gereken phase 1 i belirleryip ona göre bir yerden başllamak şu an ilk önce kullanacağım ledi bulucam ancak led ve mikro denetleyici eliime gelene kadar smilasyon üzerinden yapıcam AI önerisiyle 5K lümenli 12-24V luk şeritledler tavisye etti çok yüksek gibi ama bilmiyorum ışık seviyesini ölçmek için BH1750FVI adlı bir component var ortam ışığını ölçüyo bunu kullanıcaz sebebi kablolama kısmına da çok fazla parazite uğramıyo LDR ye nazaran sıcaklıktan çok fazla etkilenmiyo ve verileri analog 0-1024 yerine direktl Lux olarak veriyo ayrıca I2C haberleşmesi sayesinde verileri analog (Voltaj bazlı) yerine binary olarak okuyup tam anlamıyla hiç bir kesintiye uğramadan direkt mikro denetleyiciyle  haberleşebiliyor ayrıca sadece 2 kablo kullanarak birden fazla I2C protokolüyle haberleşen cihazlarla aynı anda kullanabilir her I2C sensörünün içinde kendine özekl hexadecimal bir Id si vardır
+Now what I need to do is determine Phase 1 and start from somewhere accordingly. Right now, I will first find the LED I'll use, but until the LED and the microcontroller arrive, I will do it via simulation. With AI's suggestion, 12-24V strip LEDs with 5K lumens were recommended. It seems very high, but I don't know. To measure the light level, there is a component called BH1750FVI that measures ambient light. We will use this because it doesn't suffer from much noise in the wiring compared to an LDR, it isn't affected much by temperature, and it provides the data directly in Lux instead of analog 0-1024. Moreover, thanks to I2C communication, it can read data in binary rather than analog (voltage-based) and communicate directly with the microcontroller without any interruption. Also, using only 2 wires, it can be used simultaneously with multiple devices that communicate via the I2C protocol. Each I2C sensor has its own unique hexadecimal ID.
 
-PWM = normalde benim aklımda eğer ışık 50% açılacaksa akımı (A) yı yarıya indirip o şekilde yapmayı düşündüm ancak akımı kontrol ediceğimiz mosfette bunu yaparsak şu geldi aklıma o giden yarıya düşen akımın gideceği yer ısı olur ve bunu 
+PWM = Normally I thought that if the light is to be turned on at 50%, I would reduce the current (A) by half and do it that way. But if we do this on the MOSFET that will control the current, this came to my mind: the destination of that halved current would become heat, and this...
 
+*Summary of the Day*
+- Software to be used determined: C++ (for Microcontroller control), HTML/CSS (for UI/UX), MQTT Protocol (for Communication), and JS (to assist with communication).
+- Hardware to be used: ESP32, BH1750 Light Sensor, 12V Strip LED 5 Meters (Recommendation: 5630, 5050, or COB LED - Daylight), 12V power supply, IRLZ44N MOSFET (Very Critical), Voltage Step-down (LM2596 Step-down Module).
 
-
-*Günün Özeti*
-- Kulanılacak Programlar Belirlendi : C++ (Mikro işlemci kontrolu için) HTML/CSS (UI/UX) için MQTT Protokolü (Haberleşme için) ve JS(bu da haberleşmeye yarsımcı olması için)
-- Kullanılacak HardWare : ESP32 , BH1750 Işık Sensörü , - 12V Şerit LED 5 Metre (Tavsiyemiz: 5630, 5050 veya COB LED - Günışığı). , 12V güç kaynağı , IRLZ44N MOSFET (Çok Kritik) , Voltaj Düşürücü (LM2596 Step-down Modülü)
-
-
-**Bilinmesi gerekenler**
-- **Lümen:** Işık kaynağından (LED'den) çıkan toplam ışık gücüdür.
-- **Lüks:** Bir yüzeye (sensöre) çarpan ışık miktarıdır. Yani sensör lümen değil, lüks ölçer.
+**Things to know**
+- **Lumen:** The total light power coming out of the light source (LED).
+- **Lux:** The amount of light hitting a surface (sensor). So the sensor measures lux, not lumens.
 
 ---
 
-### Neden Bu Donanım ve Yazılımları Seçtik? (Teknik Gerekçeler)
+### Why Did We Choose This Hardware and Software? (Technical Justifications)
 
-#### Donanım Tercihleri
-*   **ESP32:** Çift çekirdekli (Dual-Core) yapısı sayesinde, internet/MQTT iletişimi ile ışığın sönümlenmesi (PWM) işini birbirini kitlemeden yapar. Ayrıca içerisinde titremesiz ışık kontrolü sağlayan özel bir donanımsal modül (LEDC) barındırır.
-*   **BH1750 Sensörü:** Eski LDR'ler gibi parazitli ve anlamsız analog voltajlar okumak yerine, ortamın ışığını doğrudan "Lüks" biriminde ve dijital paketler (I2C) halinde gönderir.
-*   **IRLZ44N MOSFET:** Sistemin yangından korunmasını sağlayan elektronik vanadır. 3.3V ile çalışan zayıf ESP32, 12V/5A çeken güçlü LED'i doğrudan çalıştıramaz. MOSFET, ESP32'den gelen 3.3V'luk o minik sinyalle asıl büyük gücün önünü açıp kapatır. Isınmaması için de "Yarım açmak" yerine PWM (saniyede binlerce kez Tam Aç / Tam Kapat) mantığıyla çalıştırılır.
-*   **12V Güç Kaynağı (Adaptör):** ESP32 sadece beyindir, asıl gücü (kası) taşıyan su deposu bu adaptördür. 
-*   **LM2596 Voltaj Düşürücü (Step-down):** Ana devre 12V ile çalışırken, ESP32'nin yanmaması için o 12 Volt'u alıp 5 Volt'a düşürerek ESP32'yi besler.
+#### Hardware Preferences
+*   **ESP32:** Thanks to its Dual-Core architecture, it handles internet/MQTT communication and light dimming (PWM) without blocking each other. It also contains a specific hardware module (LEDC) that provides flicker-free light control.
+*   **BH1750 Sensor:** Instead of reading noisy and meaningless analog voltages like old LDRs, it sends the ambient light directly in "Lux" units and as digital packets (I2C).
+*   **IRLZ44N MOSFET:** It is the electronic valve that protects the system from catching fire. The weak ESP32 operating at 3.3V cannot directly drive a powerful LED drawing 12V/5A. The MOSFET uses that tiny 3.3V signal coming from the ESP32 to open and close the path for the actual main power. To prevent it from heating up, it is driven with PWM logic (Full Open / Full Close thousands of times a second) instead of "Half open".
+*   **12V Power Supply (Adapter):** The ESP32 is just the brain; this adapter is the water tank that carries the actual power (muscle).
+*   **LM2596 Voltage Step-down:** While the main circuit operates at 12V, this module takes that 12 Volts and drops it to 5 Volts to feed the ESP32 so it doesn't burn out.
 
-#### Yazılım ve Mimari Tercihleri
-*   **C++:** ESP32'nin beynini programlamak için kullanılan temel dildir.
-*   **HTML/CSS/JS:** Sistemin kullanıcı arayüzünü (UI) oluşturur. Ayrı bir uygulama yazmak yerine web tabanlı yapılması, cihaza her ekrandan ulaşılabilmesini sağlar.
-*   **MQTT Protokolü:** Sitenin, ışığa doğrudan emir göndermesi yerine hafif ve inanılmaz hızlı bir Aracı (Broker) kullanarak haberleşmesini sağlar. Bu mimari ileride başka akıllı ev aletlerini sisteme eklemeyi çok kolaylaştırır.
-*   **Wokwi:** Fiziksel donanım elde edene kadar, Lojik PWM testlerini yanma riski olmadan online sanal simülasyon üzerinden yapmamızı sağlayan platformdur.
-
----
-
-### Öğrenilen Mühendislik Konseptleri (Günlük Çıkarımlar)
-
-1.  **MOSFET ve İzolasyon (Su Vanası Analojisi):** İşlemcinin "Beyin", adaptörün "Kas" olduğu ve beynin kası doğrudan kontrol edemeyeceği gerçeği. MOSFET'in araya girerek beyni 12V yüksek akımdan koruyan elektronik bir vana görevi görmesi.
-2.  **PWM Neden Gerekli? (Isınma Problemi):** Vanayı yarım açarsak (Analog Regülasyon) oluşan elektriksel direncin sistemi ısıtıp yakacağı gerçeği. Bu yüzden vanayı saniyede binlerce kez *Tam Aç / Tam Kapat* (PWM) yaparak hiç ısınmadan ışığı kısma mühendislik hilesi.
-3.  **I2C Adresleme Mantığı:** Sensörden gelen verinin kafa karıştırıcı voltaj okumaları (Analog) yerine, "0x23" gibi hexadecimal bir adrese yollanan dijital "1 ve 0" mesajları olduğu.
-4.  **İnternetsiz Sistem (Fallback/AP Mode):** Evdeki internet gitse bile sistemin çökmemesi için kendi lokal ağından (LAN) veya doğrudan ESP32'nin kendi Wi-Fi yayını (Access Point) üzerinden kontrol edilmeye devam edilebileceği mimarisi.
-
-# Akıllı Ortam Işığı Sistemi - 1. Gün Soru & Cevap Raporu
-
-Bu doküman, projenin Ar-Ge ve teorik temel atma evresinde konuşulan mühendislik konseptlerini soru-cevap formatında özetlemektedir.
-
-### 1. Işık seviyesini nasıl ölçeceğiz, LDR kullanmak mantıklı mı?
-**Cevap:** Hayır, LDR (Işığa Bağımlı Direnç) kablo uzunluğundan ve sıcaklıktan çok çabuk etkilenir; anlamsız analog voltaj dalgalanmaları yaratır. Biz **BH1750FVI** sensörünü kullanacağız. Bu sensör, ortam ışığını analog voltaj olarak değil, doğrudan **"Lüks" (Lux)** biriminde ölçer ve I2C protokolü üzerinden dijital (1 ve 0'lar halinde) kayıpsız olarak beyne (ESP32) iletir.
-
-### 2. Neden ESP32 kullanıyoruz? İnternet yoksa sistem çöker mi?
-**Cevap:** ESP32 çift çekirdekli ve dahili Wi-Fi modülüne sahip çok güçlü bir mikrodenetleyicidir. Çift çekirdek sayesinde bir yandan MQTT ile internetten haberleşirken, diğer çekirdekle ışığı pürüzsüzce kısabilir (işlemler birbirini dondurmaz). İnternet (sunucu) bağlantısı kopsa bile, yazdığımız kod (Fallback) sayesinde kendi kendine bir Wi-Fi ağı (Access Point) oluşturarak sistemin telefondan kontrol edilmesine devam edilmesini sağlar.
-
-### 3. MQTT bir programlama dili midir?
-**Cevap:** Hayır, MQTT bir haberleşme protokolüdür (kurallar bütünüdür). Tıpkı bir kargo şirketi gibi çalışır. Biz kodlarımızı yine **C++** ve **Javascript** ile yazarız, bu dillerin ürettiği paketleri (JSON formatında) cihazlar arasında inanılmaz düşük gecikmeyle taşımak için MQTT sistemini (Broker) kullanırız.
-
-### 4. 12V Şerit LED'i neden doğrudan ESP32'ye bağlayamıyoruz?
-**Cevap:** ESP32 sistemin "Beyni"dir, "Kası" değil. Pinleri sadece 3.3 Volt ve çok düşük bir akım (yaklaşık 0.04 Amper) verebilir. Eğer 12 Volt ve 5 Amper çeken 5 metrelik bir LED'i doğrudan ESP32'ye bağlarsak, işlemci taşıyamayacağı bir akımı vermeye zorlandığı için anında yanar (kısa devre/aşırı yük). Bu gücü taşımak için **Adaptör (Güç Kaynağı)** kullanmamız şarttır.
-
-### 5. Madem adaptör var, ESP32 ve LED birbirine nasıl bağlanacak? (MOSFET nedir?)
-**Cevap:** Beyin (ESP32) ile Kas (Adaptör ve LED) arasına bir "Elektronik Vana" yani **MOSFET (IRLZ44N)** koyarız. MOSFET, devasa 12V/5A akıma dayanabilen ama açılıp kapanması için ESP32'nin ürettiği o minicik 3.3V sinyale ihtiyaç duyan bir parçadır. ESP32 bu sayede 12V akıma hiç dokunmadan, tamamen "İzole" bir şekilde LED'e giden suyu (elektriği) açıp kapatabilir.
-
-### 6. LED'in ışığını %50 kısmak için MOSFET vanasını yarım mı açıyoruz? (PWM nedir?)
-**Cevap:** Asla! Elektronik bir vanayı yarım açarsan, geçemeyen elektrik direnç (sürtünme) oluşturur ve MOSFET saniyeler içinde cayır cayır yanar. Bunun yerine mühendislikteki en büyük hilelerden biri olan **PWM (Pulse Width Modulation)** kullanılır. Vana yarım açılmaz; saniyede 1000 kere **tamamen açılıp tamamen kapatılır**. Tam açıkken ve tam kapalıyken sürtünme olmadığı için ısınma olmaz. İnsan gözü bu hızlı aç/kapayı algılayamaz ve ışığı %50 kısıkmış gibi pürüzsüz görür.
-
-### 7. Tek bir 12V adaptörden hem LED'e hem de ESP32'ye nasıl enerji vereceğiz?
-**Cevap:** Paralel bağlantı ve ortak toprak (Common Ground) mantığıyla. 12V kablo iki kola ayrılır:
-*   **1. Kol:** Doğrudan yüksek güç isteyen LED ve MOSFET'e gider.
-*   **2. Kol:** Araya konulan başparmak büyüklüğündeki **LM2596 Voltaj Düşürücü** modülüne girer. Bu modül 12 Volt'u alır, ESP32'nin yanmadan çalışabileceği güvenli 5 Volt'a düşürüp ESP32'yi besler.
-Sistemin çalışması için devredeki tüm "Eksi (-)" kabloların birbirine bağlı olması zorunludur.
-
-### 8. Projeye başlamadan önce neden PCB ve Kasa tasarımını en sona bırakıyoruz?
-**Cevap:** Endüstri standartlarında (V-Model) her zaman "Önce yazılım/mantık test edilir, sonra üretilir". Hangi kod kütüphanesinin sorun çıkaracağını, ESP32'nin hangi pininin daha iyi çalışacağını kodu yazmadan bilemeyiz. Eğer önce PCB çizer ve kutusunu basarsak, yazılımda fark edeceğimiz ufak bir direnç/pin değişikliği tüm basılı malzemelerin çöpe gitmesine neden olur. Önce simülasyon ve yazılım testleri yapılır, her şeyin çalıştığından %100 emin olunduğunda PCB ve mekanik tasarıma geçilir.
-
-### 9. Donanım gelene kadar ESP32'yi, MOSFET'i ve kodları nasıl test edeceğiz?
-**Cevap:** Gerçekte güç devresi (Adaptör + MOSFET) ile mantık devresi (ESP32) birbirinden izoledir. Bu yüzden güç kısmını simüle etmeye gerek yoktur. **Wokwi** üzerinden sadece ESP32, C++ kodu ve basit bir LED simülasyonu yapacağız. Wokwi'de sıradan bir kırmızı LED'i sorunsuz şekilde kısabilen PWM kodu, gerçek hayatta fiziksel MOSFET'in bacağına bağlandığında 5 metrelik LED'i de birebir aynı sorunsuzlukta yönetecektir. Eğer "ben illa 12V'u ve MOSFET'i de aynı anda bilgisayarda göreceğim" denirse, Wokwi yerine çok daha karmaşık olan **Proteus** kullanılmalıdır.
+#### Software and Architecture Preferences
+*   **C++:** The core language used to program the brain of the ESP32.
+*   **HTML/CSS/JS:** Forms the user interface (UI) of the system. Building it web-based instead of writing a separate application allows the device to be accessed from any screen.
+*   **MQTT Protocol:** Instead of the website sending commands directly to the light, it communicates using a lightweight and incredibly fast Broker. This architecture makes it very easy to add other smart home appliances to the system in the future.
+*   **Wokwi:** The platform that allows us to do logic PWM tests via an online virtual simulation without the risk of burning anything until we get the physical hardware.
 
 ---
 
-### Gelecek Vizyonu Fikri: Kablosuz Sensör Mimarisi (Çift ESP32)
-*   **Fikir:** Işık sensörünü (BH1750) metrelerce kabloyla ana devreye bağlamak yerine, sensörü camın kenarına koyup LED'leri süren ana devreyi dolap arkasına saklamak istersek ne olur?
-*   **Çözüm:** Sisteme **2. bir ESP32** (Sensör Düğümü) eklenir. Cam kenarındaki Sensör ESP32'si, ortam ışığını I2C üzerinden okur ve MQTT (Kargo Şirketi) üzerinden ana sunucuya Wi-Fi ile kablosuz mesaj yollar (Örn: `aybey/lux` adresine `5000` yazar). 
-*   **Ana Devre:** Dolap arkasındaki "Ana ESP32" ise sadece bu MQTT kanalına "Abone (Subscribe)" olur. `5000` mesajını telsizle aldığında anında MOSFET'i kısar. 
-*   **Avantajı:** Evin içinde tek bir kablo bile çekmeden %100 modüler bir mimari kurulur. İstenirse salona, yatak odasına farklı sensörler eklenebilir. (Not: Cam kenarındaki sensörün güç sorunu için "Telefon adaptörü" veya pilli "Deep Sleep - Derin Uyku" mimarileri araştırılabilir).
-*   **Yazılım Kolaylığı (Decoupling):** Sistemi çift ESP32'ye bölmek için kodları sıfırdan yazmaya gerek yoktur. Ana ESP32'deki "Sensörü oku ve MQTT'ye yolla" kod bloğu kesilip, Sensör ESP32'sine yapıştırılır. Sistem zaten MQTT (Kargo Şirketi) üzerinden haberleştiği için Ana ESP32, ışık bilgisinin Wi-Fi'dan mı yoksa yanındaki kablodan mı geldiğini umursamaz.
-*   **Donanım Zorluğu (Maliyet):** Yazılımı kopyalamak bedavadır ama donanımı kopyalamak masraflıdır. Kablosuz sensör demek; ekstra Lityum pil (18650), pil şarj modülü (TP4056), pilin bitmemesi için yazılacak karmaşık "Deep Sleep" kodları, ikinci bir küçük PCB çizimi ve sensöre özel yeni bir 3D kasa basımı demektir. Bu yüzden bu vizyon projenin başına değil, "Versiyon 2.0" aşamasına saklanmalıdır.
+### Engineering Concepts Learned (Daily Takeaways)
+
+1.  **MOSFET and Isolation (Water Valve Analogy):** The fact that the processor is the "Brain", the adapter is the "Muscle", and the brain cannot control the muscle directly. The MOSFET steps in and acts as an electronic valve protecting the brain from the 12V high current.
+2.  **Why is PWM Necessary? (Heating Problem):** The reality that if we open the valve halfway (Analog Regulation), the resulting electrical resistance will heat up and burn the system. Therefore, the engineering trick is to dim the light without heating it up at all by turning the valve *Fully Open / Fully Closed* (PWM) thousands of times a second.
+3.  **I2C Addressing Logic:** The data coming from the sensor is not confusing voltage readings (Analog), but digital "1 and 0" messages sent to a hexadecimal address like "0x23".
+4.  **System Without Internet (Fallback/AP Mode):** The architecture ensures that even if the home internet goes down, the system doesn't crash; it can continue to be controlled over its own local network (LAN) or directly via the ESP32's own Wi-Fi broadcast (Access Point).
+
+# Smart Ambient Lighting System - Day 1 Q&A Report
+
+This document summarizes the engineering concepts discussed during the R&D and theoretical foundation phase of the project in a Q&A format.
+
+### 1. How will we measure the light level, is it logical to use an LDR?
+**Answer:** No, the LDR (Light Dependent Resistor) is very easily affected by cable length and temperature; it creates meaningless analog voltage fluctuations. We will use the **BH1750FVI** sensor. This sensor measures the ambient light not as an analog voltage, but directly in **"Lux"** units, and transmits it to the brain (ESP32) losslessly as digital data (1s and 0s) over the I2C protocol.
+
+### 2. Why are we using an ESP32? Will the system crash if there is no internet?
+**Answer:** The ESP32 is a very powerful microcontroller with dual cores and a built-in Wi-Fi module. Thanks to the dual core, it can smoothly dim the light with one core while communicating over the internet via MQTT with the other (processes don't freeze each other). Even if the internet (server) connection is lost, thanks to the code we wrote (Fallback), it creates its own Wi-Fi network (Access Point), allowing the system to continue being controlled from a phone.
+
+### 3. Is MQTT a programming language?
+**Answer:** No, MQTT is a communication protocol (a set of rules). It works just like a cargo company. We still write our codes in **C++** and **Javascript**, but we use the MQTT system (Broker) to transport the packets (in JSON format) produced by these languages between devices with incredibly low latency.
+
+### 4. Why can't we connect the 12V Strip LED directly to the ESP32?
+**Answer:** The ESP32 is the "Brain" of the system, not the "Muscle". Its pins can only output 3.3 Volts and a very low current (about 0.04 Amps). If we directly connect a 5-meter LED drawing 12 Volts and 5 Amps to the ESP32, the processor will burn instantly because it is forced to deliver a current it cannot carry (short circuit/overload). It is mandatory to use an **Adapter (Power Supply)** to carry this power.
+
+### 5. Since there is an adapter, how will the ESP32 and LED be connected? (What is a MOSFET?)
+**Answer:** We place an "Electronic Valve", namely the **MOSFET (IRLZ44N)**, between the Brain (ESP32) and the Muscle (Adapter and LED). A MOSFET is a component that can withstand massive 12V/5A currents but requires that tiny 3.3V signal generated by the ESP32 to open and close. In this way, the ESP32 can turn the water (electricity) going to the LED on and off in a completely "Isolated" manner without ever touching the 12V current.
+
+### 6. Do we open the MOSFET valve halfway to dim the LED light to 50%? (What is PWM?)
+**Answer:** Never! If you open an electronic valve halfway, the electricity that cannot pass creates resistance (friction) and the MOSFET will burn fiercely in seconds. Instead, one of the greatest tricks in engineering, **PWM (Pulse Width Modulation)**, is used. The valve is not opened halfway; it is **fully opened and fully closed** 1000 times a second. Since there is no friction when it is fully open or fully closed, there is no heating. The human eye cannot perceive this fast on/off switching and sees the light smoothly as if it were dimmed by 50%.
+
+### 7. How will we provide energy to both the LED and the ESP32 from a single 12V adapter?
+**Answer:** With parallel connection and common ground logic. The 12V cable splits into two branches:
+*   **Branch 1:** Goes directly to the LED and MOSFET, which require high power.
+*   **Branch 2:** Goes into the thumb-sized **LM2596 Voltage Step-down** module placed in between. This module takes 12 Volts, drops it to a safe 5 Volts where the ESP32 can operate without burning, and powers the ESP32.
+For the system to work, all "Minus (-)" cables in the circuit must be connected to each other.
+
+### 8. Why do we leave the PCB and Case design to the very end before starting the project?
+**Answer:** In industry standards (V-Model), it's always "Test software/logic first, then manufacture". We cannot know which code library will cause problems or which pin of the ESP32 will work better without writing the code. If we draw the PCB and print its box first, a minor resistor/pin change we notice in the software will cause all the printed materials to go to the trash. First, simulation and software tests are done, and when we are 100% sure that everything works, we move on to the PCB and mechanical design.
+
+### 9. How will we test the ESP32, MOSFET, and codes until the hardware arrives?
+**Answer:** In reality, the power circuit (Adapter + MOSFET) and the logic circuit (ESP32) are isolated from each other. Therefore, there is no need to simulate the power part. We will only do an ESP32, C++ code, and simple LED simulation via **Wokwi**. A PWM code that can smoothly dim an ordinary red LED in Wokwi will manage the 5-meter LED with the exact same smoothness when connected to the physical MOSFET's leg in real life. If one insists "I absolutely want to see 12V and the MOSFET on the computer at the same time", then **Proteus**, which is much more complex, should be used instead of Wokwi.
+
+---
+
+### Future Vision Idea: Wireless Sensor Architecture (Dual ESP32)
+*   **Idea:** What if instead of connecting the light sensor (BH1750) to the main circuit with meters of cable, we want to put the sensor by the window and hide the main circuit driving the LEDs behind a cabinet?
+*   **Solution:** A **2nd ESP32** (Sensor Node) is added to the system. The Sensor ESP32 by the window reads the ambient light via I2C and sends a wireless message over Wi-Fi via MQTT (Cargo Company) to the main server (E.g., writes `5000` to the `aybey/lux` address).
+*   **Main Circuit:** The "Main ESP32" behind the cabinet simply "Subscribes" to this MQTT channel. When it receives the `5000` message via radio, it instantly dims the MOSFET.
+*   **Advantage:** A 100% modular architecture is established without pulling a single cable inside the house. If desired, different sensors can be added to the living room or bedroom. (Note: For the power issue of the sensor by the window, "Phone adapter" or battery-powered "Deep Sleep" architectures can be researched).
+*   **Software Ease (Decoupling):** There is no need to write the codes from scratch to split the system into dual ESP32s. The "Read sensor and send to MQTT" code block in the Main ESP32 is cut and pasted into the Sensor ESP32. Since the system already communicates over MQTT (Cargo Company), the Main ESP32 doesn't care whether the light info comes from Wi-Fi or from the cable next to it.
+*   **Hardware Difficulty (Cost):** Copying software is free, but copying hardware is costly. A wireless sensor means; an extra Lithium battery (18650), battery charging module (TP4056), complex "Deep Sleep" codes to be written so the battery doesn't die, drawing a second small PCB, and 3D printing a new case specific to the sensor. That's why this vision should be saved for the "Version 2.0" phase, not for the beginning of the project.
