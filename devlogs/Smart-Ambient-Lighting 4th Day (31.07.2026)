@@ -1,0 +1,43 @@
+bu günün araştırmaları kalan component araştırmaları olucak bunları yaptıktan sonra zamanım yeterse gerekli analizleri de yapıcam ve çok detaylı eksiksiz bir rapor yazmakistiyorum analizler hakkında bu yüzden AI dan yardım alıcam sonrasında ilk bir demo yapısı ve süreci hızlandırmak için test kodu yazıcam sadece max kullanımda kullanan bir kod saniyede PWM gücü yettiği kadar kapatıp açıcak sonrasında bir smilasyon kullanarak (öncesinde gerekli doğru smilasyonu bulmam lazım) termal test ve benzeri tesltleri yapıcam bir ısınma sorunu varmı kısa devre varmı programda veya pcb üzerinde bir sıkıntı varmı diye devre testi geçtikten sonra artık gerçek ten projeye başlayabilirm bu süreç ne kadar sürer bilmiyorum ama araştıma aşamasını bitirdikten sonra da online esp sim üzerinden kodu yazııp proglamlıcam ondan sonra pcb yi tasarlıyıp hepsini beraber smule edebileceim bir programa sokucam burdaki testler de başarıyla sağlanınca ondan sonra fusion 360 üzerinde bir case tasarlayıp montaj aşamasına geçicem 
+
+tamam planlar değişti termal test sim öğrenmel aylar alırmış küçük bir araştırmamda bunu öğrendim bu yüzden plan şölye olucak 
+component araştırması -> gerekli analizlerin yapılması (SWOT-PEST,vb) -> Esp kod yazımı ->gerekli parçalar elime ulaşınca bread board testi -> Termal testler -> PCB tasarımı -> Case tasarımı ->
+AI önerisi unutlmaması gereknler
+- 1000µF (35V veya üstü) Elektrolitik Kondansatör
+- 330 Ohm Direnç
+- 10K Ohm Direnç
+- TO-220 Alüminyum Mosfet Soğutucusu
+- 2-Pin ve 3-Pin Vidalı Klemensler
+- Dişi Header Soketler
+- 18 AWG Kalın Bakır Kablo
+- Jumper Kablolar
+- Delikli Pertinaks (İlk test panosu için)
+**Unutulmaması Gerekenler (Kıbrıs / Kapalı Kutu Şartları):**
+
+- Kutu 3D baskısında kesinlikle PLA kullanılmayacak (PETG veya ABS kullanılacak).
+- Kutunun alt ve üst yüzeylerine pasif hava akışı (baca etkisi) için havalandırma ızgaraları açılacak.
+- Mosfet kesinlikle soğutucusuz (çıplak) kullanılmayacak.
+
+şu anda 24V 5A için dönüştürücü arıyorum tam güçte çalıştırmak sıknıtı olabileceği için  24V 10A adaptör alıcam kasa tipi olarak AI SMPS öneriyo ama malyet farkı çok ise bence normal plastik kasa almaktan sıkıntı olmaz önemli datasheet verileri = SCP(kısa devre koruması),OTP(Sıcaklık koruıması yanmak yerine gücü keser),OVP(yüksek voltaj koruması)
+marka olarak da mean Well öneriyo bilmiyom çok pahalıysa alamam zaten bulduğum marka  Mervesan Power 10A 24V 250W Metal Kasalı İç Mekan Ac/Dc Smps Adaptör MRW-250-24-S bunu çok anlamadım datasheet  de bulamadım ancak şunu öğrendim  o 10W lık fazlalık içnde V arttırabileceğimiz bir vida olmasından ve 25V a kadar çıkarabilecğimizi söylüyomuş sırada 24-5V regulatör var regulatör için ilk önemli olay mimari kısmı 2 farklı türü var 1.si lineer 2.si ise DC-DC converter/Step-Down olarak adlandırılıyo
+
+lineer aklıı bir direnç gibi 24V u 5Va çevirir ancak 19 V ısı olarak çıkar
+DC-DC ise PWM sinyali gibi saniyede binlerce kez akımı açıp kapar ve bu şekilde 5V da sabit bırakır arada çok küçük bir ısınma olur ve aldığım bilgilere göre(AI) 90% kadar verimi vardır bu durumda DC/DC kullanıyoruz önemli olan diğer derğerler ise input voltage 24V adaptör dalgalanmalar sebebile daha fazla V verebilir bu yüzden max input voltage min 28-29V olmalı ki yanmasın
+diğer öenli olay output voltage burda iki seçenek karşımıza çıkıyo ya 5V fixed ya da ayarlanabilir olarak ben riske girmediğim için Fixed tercih edicem (ama sonraki projelerin testlerini falan da yapabilmek için aslında ayarlanabilir almak da mantıklı gibi düşünücem) 3. değer ise output current bu da esp32 sunucu + I2C için bellikri bir akım çekicek bu yüzden min 1 amper ama ne olur lamz 1.5 2 amper bulabiliriz bence bulduğum "https://www.direnc.net/lm2596s-usb-voltaj-dusurucu-6-40-giris-5v-3a-cikis" 
+bilgileri
+
+LM2596S Usb Voltaj Düşürücü
+
+---
+- Giriş voltajı:DC 6v-40v
+- Çıkış voltajı:DC 5v
+- Çıkış Akımı: 3A (Maksimum)
+- Tip: LM2596S usb voltaj düşürücü
+- Dönüşüm Verimliliği:% 92 (En Yüksek)
+- Anahtarlama Frekansı: 150KHz
+- Ağırlık:17gr
+- Çalışma sıcaklığı: -40°C - +85°C
+- Boyutu:50mm X 35mm X 12mm
+
+sırada fuse seçimi var burda kritik noktalar var ilk olarak nereye beğlanıcağı güç kaynağından hemen sonraya bğlamam gerekiyo +24V un hemen çıkışına bağlanıcak sonraki doğru fuse seçimi 2 tür var 1.si glass 2.si bıçak fuse glass fuse hafif ve kırılgan ama yandığını anlamak kolay  içindeki ince tel yanınca zaten is bırakıyo ancak kırılma riski var ve çok fazla yük geçerse bir anda patlayabilir ve tak çıkar yaparken de kırabilirm diğeri bıçak olan çok sağlam ve uluslar arası renk kodları var ve tak çıkar çok kolay ve kırlıkmıyo ama yandığını anlamak biraz zor içindeki küçük delikten bakıp anlamak lazım ama ışıklar bir anda giderse bakacağım yeri biliyom bu yüzden bıçak fuse seçicem ve yine 20% tolerans koyucam ki 5A de yanarsa zaten 5A kullandığımız için dikekt yanar fişe takar takmaz ki bunu istemeyiz ayrıca fuse u düzgün takabilmek için yuvaya da ihtiyacım var bunun linkini koymaya gerek duymadım ama 7.5V sigorta işimi görür
+şimdilik bu kadar 
