@@ -1,0 +1,109 @@
+what I'll do today is tackle the esp code. first, I'll see what I'll do in the esp part. primarily, I'll finalize exactly what the esp will do, the http web server, sensor connections, pwm code, etc. what else will be done. then the other thing I'll do is a small-scale swot and pest and cost analysis. after these, I'll finally draw up a complete work loop and see what the functions in the web part will be, and I'll lay out a fully functional system on paper. then if I have time and enough money, I'll order the components and I should slowly start learning to write for esp.
+
+first, let me write down what I expect from this project and then I'll summarize it.
+first and most importantly, the adaptive light feature. its brightness will be inversely proportional to the brightness outside, between 0-100%. secondly, I'll build an app with html/css, it will be a smart home app, and the brightness can also be changed manually from there.
+
+what can be done: 2 extra esps can be used, and a lightbulb can be used instead of a led strip, and a battery-powered system can be set up to switch to a dual system. the idea is this: using bluetooth and an app, we can do this: the sensor is battery-powered, and for example, we put it outside the window, it broadcasts bluetooth. we plug in a led bulb, put a mesh outside it that refracts the light, and when plugged in, it also broadcasts bluetooth. these pair with each other and work autonomously. and this is what happens: the esp inside the sensor can also be connected via phone. the brightness can also be changed via the app. but this idea is for later. let's focus on what we have now, but the system won't be very different. here's what I imagine right now: the user plugs the device into the socket. this goes to two different channels. the first goes to the led, the second goes to the esp. electricity also goes from the esp to the sensor. these communicate with each other, and the result goes from the esp to the mosfet using pwm. depending on the situation, it turns on and off thousands of times a second, making the brightness look like it's dropped, but at the same time, it can be manually adjusted via web or app. it could be moddable. for example, when I work at night, I don't want it to be too bright, I want it to run at 70%. I can put this as a preset. I think this would also be good. along with these ideas, making a small-scale analysis, I decided to make this idea entirely a personal/student project. I think this is the most logical thing.
+
+I didn't have enough money to order components. now I'm going to find the most logical esp simulator I can find first. 
+
+next is learning esp. at least since I'll be learning based on the project, I won't have to learn unnecessary codes etc. now I'm learning a bit of esp architecture.
+
+<img src="Ekler/Pasted%20image%2020260813225018.png" width="50%">
+
+as I sent here, in this esp model (might be in others too), there are no specific number of pwm pins. with an algorithm inside, we can operate any pin we want as a pwm. this is very good to know. now first I'll set up a ldr system from wokwi, let's see if my arduino knowledge will work here.
+<img src="Ekler/Pasted%20image%2020260814000736.png" width="50%">
+currently I'm trying to learn the simulation. I haven't written c++ in a while, I forgot arduino/esp codes. first I made a ldr sim, now I'll use pwm with ldr, after that I'll continue.
+
+I just realized I haven't written the equation yet. 
+I'm writing it on paper.
+ I wrote the equation, off the top of my head it might not be very correct but first prototype:
+Led % = Ly
+Ambient Brightness = Op
+
+Ly = lim Op -> 0 1/Op , Op != 0 my first prototype is this. let me talk to AI about this. this equation was mathematically a very good and correct equation, but in an industrial sense, would 1/x be very problematic for my situation? so instead of a limit here, a linear inverse proportion equation should be established. so the required equation should be Ly = 100 x ( 1 - (Op/Opmax)). Opmax = maximum upper limit.
+new info: in this esp-s3 model I'm using, to run pwm, ledwrite is used instead of analog.write. there are 3 main commands here too.
+first step is set up (like serial port). first, channel, frequency, and resolution are selected.
+ledcSetup(0, 5000, 8); = channel 0, turning on and off 5K times a second, and 8-bit (meaning 0-255).
+pin connection thing is also like this, the channel is connected like pinmode
+ledcAttachPin(19, 0); here it means channel 0, pin 19.
+and the analog.write part = ledcWrite(0, Ly); and here we turn on the light. I'm trying this right now. yeah it didn't work. a new update came, I'm writing those down.
+" they deleted the old `ledcSetup()` and `ledcAttachPin()` commands! (This is why you're getting a 'No such command' error)."
+"// ledcAttach(Pin_To_Use, Frequency, Resolution);
+
+ledcAttach(LED, 5000, 8);"
+"// ledcWrite(Pin_To_Use, PWM_Value_To_Send);
+
+ledcWrite(LED, 127);"
+alright I sorted the code. first I needed to solve the equation. first I did it like the one here, the equation turned out inverted. instead of having AI do it, I went and found the linear equation using inverse proportion myself. 
+Ly=0.253xLDR_On - 8 I ran the code using this equation and I handled that intended code. now the led turns on according to the light level.
+<p align="center">
+  <img src="Ekler/WhatsApp Image 2026-08-14 at 01.34.05.jpeg" width="48%" />
+  <img src="Ekler/WhatsApp Image 2026-08-14 at 01.34.05 (1).jpeg" width="48%" />
+  <br><br>
+  <img src="Ekler/Pasted image 20260814012715.png" width="48%" />
+  <img src="Ekler/Pasted image 20260814012720.png" width="48%" />
+</p>
+![[Pasted image 20260814034748.png]]
+
+and this was the end. I got a lot of good work done today.
+
+# 🏆 Smart Ambient Light - Day 5 Analysis Report
+
+**Date:** August 14, 2026 (Night Shift) **Focus:** System Architecture, Mathematical Modeling, Hardware Simulation and UI/UX Planning **Engineer:** Yiğit Aybey
+
+NOTE
+
+**Executive Summary** Day 5 is the breaking point where the project moves from the "idea" phase to the "engineering" phase. Today, commercial concerns were put aside, and the project was entirely based on an **"Open-Source Portfolio and Advanced IoT"** concept. The bridge between Hardware (Sensor) and Software (PWM) was mathematically proven, and the technical foundations of the web interface (Front-End) were laid.
+
+---
+
+## 1. Strategic and Commercial Decisions (Project Positioning)
+
+As a result of the market research and Cost, SWOT, and PEST analyses conducted in the early hours of the day, decisions determining the fate of the project were taken:
+
+- **Target Audience Shift:** It was decided that the project will not be for the end-user (for sale), but directly an **Open-Source** portfolio piece. This way, instead of "Cost/Profit" concerns, the freedom to progress with a "Maximum Engineering Showcase" focus was gained.
+- **Architectural Choice (Wi-Fi vs BLE):** It was discussed whether light control should be done via Bluetooth (Mobile App) or Wi-Fi (HTTP Web Server). Due to the system's ability to communicate with local home servers (via MQTT) like **"JARVIS"** in the future, and the **PWA (Progressive Web App)** logic that eliminates the hassle of "Downloading an App", the **Wi-Fi / Asynchronous HTTP** architecture was definitively chosen.
+
+---
+
+## 2. Hardware and Mathematical Modeling (Wokwi Success)
+
+When switching to the simulation environment, the hardware-software integration, which is the cornerstone of the mechatronics discipline, was achieved:
+
+- **Hardware Debugging:** The reversed LED connection and the missing LDR Voltage Divider in the initial attempts were detected and fixed.
+- **Hardware Inversion Discovery:** It was noticed that due to the connection of the LDR and the 10k resistor, the system has a naturally inverting structure (high voltage in the dark: `4011`, low voltage in the light: `32`).
+- **Establishing the Linear Control Equation (y=mx+b):** Ready-made black box functions like `map()` were rejected, and a unique equation converting the 0-4095 (ADC) signal from the hardware to a 0-1023 (PWM) motor signal was derived:
+    
+    > **`Ly = (0.253 * LDR_On) - 8`** Thanks to this equation, a 100% flawless "Smooth Fading" damping response was achieved.
+    
+- **ESP32 Core v3.0 Integration:** Old PWM libraries were abandoned, and the current `ledcAttach` and `ledcWrite` hardware commands were successfully implemented.
+
+---
+
+## 3. System Architecture and Interface (UI/UX) Planning
+
+At the end of the day, the project's **Work Loop** and **Web Interface (HTML/CSS)** were mapped on the Obsidian Canvas.
+
+### Work Loop (Logic Loop)
+
+IMPORTANT
+
+**Override Logic:** The rule of "dominating" (overriding) the autonomous data coming from the sensor if a manual command comes from the web server was written into the system. This is the basis of the Auto/Manual switch in industrial systems.
+
+### Front-End (Web) Design Decisions
+
+- **Color Palette (60-30-10 Rule):** To give the system a "Premium Smart Home" feel; a palette of 60% Dark Anthracite (Background), 30% Midnight Blue (Secondary elements) and 10% Warm Yellow/Amber (Accents, buttons representing light) was locked in.
+- **Basic HTML Functions:** Mode selection (Auto/Manual), Brightness Slider, Customizable and savable "Preset" buttons, and a live Lux indicator were included in the plan.
+- **Advanced Additions (Stretch Goals):** Ideas like _Sleep Timer (Fade Out)_, _Live Connection Indicator (Liveness Ping)_, and _Lux Line Graph_ that would turn the project into a masterpiece were added to the drawing board.
+
+---
+
+## 4. Goals for the Next Shift (Day 6)
+
+After the 100% successful completion of Day 5, the goals for the next phase (Day 6) were set as "Network and Communication":
+
+6. **ESP32 Station Mode:** The system connecting to the local network (Wi-Fi) and getting an IP.
+7. **Asynchronous Server Setup:** Integrating the `ESPAsyncWebServer` library.
+8. **File System (LittleFS):** Extracting HTML and CSS codes from being spaghetti code and hosting them as separate files (index.html) in the ESP32 flash memory.
+9. **Data Bridge:** Transferring the data from the sensor to the web page in the browser without delay (via WebSocket).
