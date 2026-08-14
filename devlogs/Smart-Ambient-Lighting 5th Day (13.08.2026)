@@ -9,10 +9,10 @@ I didn't have enough money to order components. now I'm going to find the most l
 
 next is learning esp. at least since I'll be learning based on the project, I won't have to learn unnecessary codes etc. now I'm learning a bit of esp architecture.
 
-<img src="Ekler/Pasted%20image%2020260813225018.png" width="50%">
+<img src="devlogs/Photo/ESP32-S3 PWM Schematic" width="50%">
 
 as I sent here, in this esp model (might be in others too), there are no specific number of pwm pins. with an algorithm inside, we can operate any pin we want as a pwm. this is very good to know. now first I'll set up a ldr system from wokwi, let's see if my arduino knowledge will work here.
-<img src="Ekler/Pasted%20image%2020260814000736.png" width="50%">
+<img src="devlogs/Photo/LDR Deneme" width="50%">
 currently I'm trying to learn the simulation. I haven't written c++ in a while, I forgot arduino/esp codes. first I made a ldr sim, now I'll use pwm with ldr, after that I'll continue.
 
 I just realized I haven't written the equation yet. 
@@ -38,14 +38,11 @@ ledcWrite(LED, 127);"
 alright I sorted the code. first I needed to solve the equation. first I did it like the one here, the equation turned out inverted. instead of having AI do it, I went and found the linear equation using inverse proportion myself. 
 Ly=0.253xLDR_On - 8 I ran the code using this equation and I handled that intended code. now the led turns on according to the light level.
 <p align="center">
-  <img src="Ekler/WhatsApp Image 2026-08-14 at 01.34.05.jpeg" width="48%" />
-  <img src="Ekler/WhatsApp Image 2026-08-14 at 01.34.05 (1).jpeg" width="48%" />
+  <img src="devlogs/Photo/LDR min Lux Max Light" width="48%" />
+  <img src="devlogs/Photo/LDR max lux min Light" width="48%" />
   <br><br>
-  <img src="Ekler/Pasted image 20260814012715.png" width="48%" />
-  <img src="Ekler/Pasted image 20260814012720.png" width="48%" />
+  <img src="devlogs/Photo/Work Flow diagram" width="48%" />
 </p>
-![[Pasted image 20260814034748.png]]
-
 and this was the end. I got a lot of good work done today.
 
 # 🏆 Smart Ambient Light - Day 5 Analysis Report
